@@ -5,6 +5,7 @@ import {
   BaseEntity,
   CreateDateColumn,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
 
 @Entity('employee')
 export class EmployeeEntity extends BaseEntity {
@@ -32,7 +33,7 @@ export class EmployeeEntity extends BaseEntity {
   @Column({ type: 'varchar', nullable: false, name: 'id_type' })
   idType: string;
 
-  @Column({ type: 'varchar', nullable: false, name: 'mail' })
+  @Column({ type: 'varchar', length: 300, nullable: false, name: 'mail' })
   mail: string;
 
   @Column({ type: 'varchar', nullable: false, name: 'area' })
@@ -46,4 +47,11 @@ export class EmployeeEntity extends BaseEntity {
 
   @Column({ type: 'timestamp', name: 'admission_at' })
   admission: Date;
+
+  @Exclude()
+  @Column('datetime', {
+    name: 'updated_at',
+    default: () => null,
+  })
+  updatedAt: Date;
 }
