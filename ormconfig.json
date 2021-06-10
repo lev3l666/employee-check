@@ -5,6 +5,14 @@
     "username": "root",
     "password": "",
     "database": "employee_checkin",
-    "entities": ["dist/**/*.entity{.ts,.js}"],
-    "synchronize": true
+    "logging": true,
+    "entities": [
+        "dist/**/*.entity{.ts,.js}"
+      ],
+    "synchronize": false,
+    "migrations": ["src/database/migration/*.ts"],
+    "migrationsRun": false,
+    "cli": {
+        "migrationsDir": "src/database/migration"
+      }
   }
