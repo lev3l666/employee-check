@@ -16,7 +16,8 @@ import {
 } from 'class-validator';
 import { availableCountries } from '../../helpers/countries';
 import { availableAreas } from '../../helpers/areas';
-
+import { availableTypes } from '../../helpers/idTypes';
+import { EmployeeService } from '../../employee/employee.service';
 
 const today = new Date();
 const joinedToday = `${today.getFullYear()}-${
@@ -25,6 +26,8 @@ const joinedToday = `${today.getFullYear()}-${
 const lastMonth = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
 
 export class EmployeeDto {
+  constructor(private readonly employeeService: EmployeeService) {}
+
   @IsEmpty()
   id: number;
 
@@ -34,7 +37,6 @@ export class EmployeeDto {
   employeeId: string;
 
   @IsNotEmpty()
-  //@IsAlpha()
   @Matches(/^[A-Z\s]+$/, {
     message: 'lastName Should only contain chars. from A-Z (Caps) and spaces',
   })
@@ -76,7 +78,7 @@ export class EmployeeDto {
   @IsIn(availableCountries)
   country: string;
 
-  @IsIn(['CC', 'CE', 'PP', 'PE'])
+  @IsIn(availableTypes)
   @IsNotEmpty()
   idType: string;
 

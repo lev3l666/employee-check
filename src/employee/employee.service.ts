@@ -24,7 +24,7 @@ export class EmployeeService {
     };
   }
 
-  async find(id: number) {
+  async findEmployee(id: number) {
     const user = await this.employeeEntity.findOne({
       where: { id, status: 1 },
     });
@@ -38,13 +38,21 @@ export class EmployeeService {
 
   async create(employee: EmployeeDto): Promise<EmployeeInterface> {
     employee.mail = await this.mailChecker(employee);
-    const response = await this.employeeEntity.save(employee);
-    console.log('employee:', employee, 'ex');
-    return {
-      statusCode: 200,
-      error: null,
-      message: response,
-    };
+    if (await this.findDupId(employee.employeeId, employee.idType)) {
+      return {
+        statusCode: 400,
+        error: 'ID already registered',
+        message: 'Bad Request',
+      };
+    } else {
+      const response = await this.employeeEntity.save(employee);
+      console.log('employee:', employee);
+      return {
+        statusCode: 200,
+        error: null,
+        message: response,
+      };
+    }
   }
 
   async update(body): Promise<EmployeeInterface> {
@@ -101,5 +109,17 @@ export class EmployeeService {
       i++;
     }
     return temp.mail;
+  }
+
+  async findDupId(employeeId: string, idType: string) {
+    console.log('employeeId ', employeeId, 'idType', idType);
+    const existingEmployee = await this.employeeEntity.findOne({
+      where: { employeeId: employeeId, idType: idType },
+    });
+    if (existingEmployee === undefined) {
+      return false;
+    } else {
+      return true;
+    }
   }
 }
