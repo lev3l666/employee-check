@@ -16,7 +16,7 @@
 ## Database configuration
 
 create a database with the name 'employee_checkin' and
-run provided SQL script in the root folder
+run provided SQL script named 'employee.sql' located in the root folder
 
 ## Installation
 
