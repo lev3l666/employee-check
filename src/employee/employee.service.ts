@@ -1,11 +1,13 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EmployeeDto } from 'src/dto-interface/dto/EmployeeDto';
+import { EmployeeDto, UpdateEmpDto } from 'src/dto-interface/dto/EmployeeDto';
 import { EmployeeInterface } from 'src/dto-interface/interface/employee.interface';
-import { Repository } from 'typeorm';
+import { Repository, getConnection } from 'typeorm';
 import { EmployeeEntity } from './employee.entity';
 import { availableCountries } from '../helpers/countries';
 import { availableAreas } from '../helpers/areas';
+import { availableTypes } from '../helpers/idTypes';
+import { validate, validateOrReject } from 'class-validator';
 
 @Injectable()
 export class EmployeeService {
@@ -16,7 +18,6 @@ export class EmployeeService {
 
   async index() {
     const employees = await this.employeeEntity.find({ where: { status: 1 } });
-    console.log('Employees:', employees);
     return {
       statusCode: 200,
       error: null,
@@ -28,7 +29,6 @@ export class EmployeeService {
     const user = await this.employeeEntity.findOne({
       where: { id, status: 1 },
     });
-    console.log('User:', user);
     return {
       statusCode: 200,
       error: null,
@@ -46,7 +46,6 @@ export class EmployeeService {
       };
     } else {
       const response = await this.employeeEntity.save(employee);
-      console.log('employee:', employee);
       return {
         statusCode: 200,
         error: null,
@@ -55,16 +54,47 @@ export class EmployeeService {
     }
   }
 
-  async update(body): Promise<EmployeeInterface> {
-    const response = await this.employeeEntity.update(
-      { id: body.id },
-      { employeeId: body.employeeId },
-    );
-    console.log('Body:', body);
+  async checkRegeneration(name, id ) {
+    const employee = await this.employeeEntity.findOne({ id: id });
+    let response;
+    if (name.includes('1')) {
+      console.log('Regeneration of email in progress...', employee);
+      employee.mail = await this.mailChecker(employee);
+      response = await this.employeeEntity.save(employee);
+    }
+  }
+
+  async deleteEmployee(id): Promise<EmployeeInterface> {
+    this.employeeEntity.update({ id: id }, { status: 0 });
     return {
       statusCode: 200,
       error: null,
-      message: response,
+      message: 'Sucess',
+    };
+  }
+
+  async update(body: UpdateEmpDto): Promise<EmployeeInterface> {
+    // temporary clean id
+    const tempId = body.id;
+    body.id = null;
+    await validate(body, {skipMissingProperties: true}).then((errors) => {
+      if (errors.length > 0) {
+        let msg = Object.values(errors[0].constraints);
+        throw new BadRequestException(msg);
+      }
+    });
+    const givenDBName = Object.keys(body)[1];
+    const value = body[givenDBName];
+    // console.log('body:', body, '\ngivenDBName:', givenDBName, '\nValue:', value);
+    // making query string
+    const queryReq = `UPDATE employee SET ${givenDBName} = "${value}" WHERE id = ${tempId}`;
+    // exec query
+    const response = await getConnection().query(queryReq);
+    this.checkRegeneration(givenDBName, tempId);
+    return {
+      statusCode: 200,
+      error: null,
+      message: 'Sucess',
     };
   }
 
@@ -74,6 +104,10 @@ export class EmployeeService {
 
   async getCountries() {
     return availableCountries;
+  }
+
+  async getIdTypes() {
+    return availableTypes;
   }
 
   async mailFinder(mail: string) {
@@ -112,7 +146,7 @@ export class EmployeeService {
   }
 
   async findDupId(employeeId: string, idType: string) {
-    console.log('employeeId ', employeeId, 'idType', idType);
+    // console.log('employeeId ', employeeId, 'idType', idType);
     const existingEmployee = await this.employeeEntity.findOne({
       where: { employeeId: employeeId, idType: idType },
     });

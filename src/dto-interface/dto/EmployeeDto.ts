@@ -13,11 +13,12 @@ import {
   MaxLength,
   MinDate,
   NotContains,
+  validate,
 } from 'class-validator';
 import { availableCountries } from '../../helpers/countries';
 import { availableAreas } from '../../helpers/areas';
 import { availableTypes } from '../../helpers/idTypes';
-import { EmployeeService } from '../../employee/employee.service';
+import { PartialType } from '@nestjs/swagger';
 
 const today = new Date();
 const joinedToday = `${today.getFullYear()}-${
@@ -26,8 +27,6 @@ const joinedToday = `${today.getFullYear()}-${
 const lastMonth = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
 
 export class EmployeeDto {
-  constructor(private readonly employeeService: EmployeeService) {}
-
   @IsEmpty()
   id: number;
 
@@ -104,3 +103,6 @@ export class EmployeeDto {
   @IsEmpty({ message: 'updatedAt is auto-generated'})
   updatedAt: Date;
 }
+
+export class UpdateEmpDto extends PartialType(EmployeeDto) {}
+
